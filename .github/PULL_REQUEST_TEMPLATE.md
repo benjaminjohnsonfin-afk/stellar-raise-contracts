@@ -3,10 +3,13 @@
 <!-- Please provide a concise description of your changes. -->
 
 ## Related Issues
+
 <!-- List related issues. Use "Closes #<issue-number>" to auto-close issues on merge. -->
+
 Closes #
 
 ## Type of Change
+
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Breaking change
@@ -14,6 +17,7 @@ Closes #
 - [ ] CI / Infrastructure
 
 ## Checklist
+
 - [ ] My branch is based off `develop`, not `main`
 - [ ] I have run `cargo fmt --all` and the code is properly formatted
 - [ ] I have run `cargo clippy --all-targets -- -D warnings` with no warnings
@@ -24,7 +28,9 @@ Closes #
 - [ ] My commit messages follow the [conventional commits](https://www.conventionalcommits.org/) format
 
 ## Screenshots / Logs (if applicable)
+
 <!-- Add screenshots or logs to help explain your changes. -->
 
 ## Additional Notes
+
 <!-- Add any other context or information here. -->
