@@ -204,5 +204,5 @@ pub fn describe_init_error(code: u32) -> &'static str {
 /// `AlreadyInitialized` (1) is permanent; all validation errors (8–12) are retryable.
 #[inline]
 pub fn is_init_error_retryable(code: u32) -> bool {
-    matches!(code, 8 | 9 | 10 | 11 | 12)
+    matches!(code, 8..=12)
 }
