@@ -14,6 +14,7 @@ pub mod campaign_goal_minimum;
 pub mod cargo_toml_rust;
 pub mod contract_state_size;
 pub mod contribute_error_handling;
+pub mod crowdfund_initialize_function;
 pub mod proptest_generator_boundary;
 pub mod refund_single_token;
 pub mod soroban_sdk_minor;
@@ -28,6 +29,8 @@ use refund_single_token::{
 mod auth_tests;
 #[cfg(test)]
 mod test;
+#[cfg(test)]
+mod crowdfund_initialize_function_test;
 // #[cfg(test)]
 // mod cargo_toml_rust_test;
 // #[cfg(test)]
@@ -133,9 +136,21 @@ pub enum ContractError {
     GoalReached = 5,
     Overflow = 6,
     NothingToRefund = 7,
-    ZeroAmount = 8,
-    BelowMinimum = 9,
-    CampaignNotActive = 10,
+    /// goal must be > 0
+    InvalidGoal = 8,
+    /// min_contribution must be > 0
+    InvalidMinContribution = 9,
+    /// deadline must be at least MIN_DEADLINE_OFFSET seconds in the future
+    DeadlineTooSoon = 10,
+    /// platform fee_bps must be <= 10_000
+    InvalidPlatformFee = 11,
+    /// bonus_goal must be strictly greater than goal
+    InvalidBonusGoal = 12,
+    /// bonus_goal_description validation failed
+    InvalidBonusGoalDescription = 13,
+    ZeroAmount = 14,
+    BelowMinimum = 15,
+    CampaignNotActive = 16,
 }
 
 #[contractclient(name = "NftContractClient")]
@@ -174,66 +189,21 @@ impl CrowdfundContract {
         bonus_goal: Option<i128>,
         bonus_goal_description: Option<String>,
     ) -> Result<(), ContractError> {
-        if env.storage().instance().has(&DataKey::Creator) {
-            return Err(ContractError::AlreadyInitialized);
-        }
-
-        creator.require_auth();
-
-        // Store admin for upgrade authorization.
-        env.storage().instance().set(&DataKey::Admin, &admin);
-
-        if let Some(ref config) = platform_config {
-            if config.fee_bps > 10_000 {
-                panic!("platform fee cannot exceed 100%");
-            }
-            env.storage()
-                .instance()
-                .set(&DataKey::PlatformConfig, config);
-        }
-
-        if let Some(bg) = bonus_goal {
-            if bg <= goal {
-                panic!("bonus goal must be greater than primary goal");
-            }
-            env.storage().instance().set(&DataKey::BonusGoal, &bg);
-        }
-
-        if let Some(bg_description) = bonus_goal_description {
-            if !contract_state_size::validate_bonus_goal_description(&bg_description) {
-                panic!("Bonus goal description too long");
-            }
-            env.storage()
-                .instance()
-                .set(&DataKey::BonusGoalDescription, &bg_description);
-        }
-
-        env.storage().instance().set(&DataKey::Creator, &creator);
-        env.storage().instance().set(&DataKey::Token, &token);
-        env.storage().instance().set(&DataKey::Goal, &goal);
-        env.storage().instance().set(&DataKey::Deadline, &deadline);
-        env.storage()
-            .instance()
-            .set(&DataKey::MinContribution, &min_contribution);
-        env.storage().instance().set(&DataKey::TotalRaised, &0i128);
-        env.storage()
-            .instance()
-            .set(&DataKey::BonusGoalReachedEmitted, &false);
-        env.storage()
-            .instance()
-            .set(&DataKey::Status, &Status::Active);
-
-        let empty_contributors: Vec<Address> = Vec::new(&env);
-        env.storage()
-            .persistent()
-            .set(&DataKey::Contributors, &empty_contributors);
-
-        let empty_roadmap: Vec<RoadmapItem> = Vec::new(&env);
-        env.storage()
-            .instance()
-            .set(&DataKey::Roadmap, &empty_roadmap);
-
-        Ok(())
+        use crowdfund_initialize_function::{execute_initialize, InitParams};
+        execute_initialize(
+            &env,
+            InitParams {
+                admin,
+                creator,
+                token,
+                goal,
+                deadline,
+                min_contribution,
+                platform_config,
+                bonus_goal,
+                bonus_goal_description,
+            },
+        )
     }
 
     /// Returns the list of all contributor addresses.

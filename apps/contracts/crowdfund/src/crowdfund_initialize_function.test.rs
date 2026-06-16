@@ -12,12 +12,7 @@
 //! | Happy-path initialization | 4     |
 //! | Re-initialization guard   | 1     |
 //! | Goal validation           | 3     |
-//! | Min-contribution valid.   | 3     |
-//! | Deadline validation       | 3     |
-//! | Platform fee validation   | 3     |
-//! | Bonus goal validation     | 4     |
-//! | Storage field checks      | 5     |
-//! | Event emission            | 2     |
+
 //! | Error helpers             | 4     |
 //! | Edge / boundary cases     | 5     |
 //!
@@ -167,7 +162,7 @@ fn test_initialize_stores_admin_address() {
     let (env, client, creator, token, _admin) = setup();
     let deadline = env.ledger().timestamp() + 3600;
     let admin = Address::generate(&env);
-    
+
     client.initialize(
         &admin,
         &creator,
@@ -819,7 +814,7 @@ fn test_initialize_stores_admin_address() {
     let (env, client, creator, token, _admin) = setup();
     let deadline = env.ledger().timestamp() + 3600;
     let admin = Address::generate(&env);
-    
+
     client.initialize(
         &admin,
         &creator,
@@ -840,7 +835,7 @@ fn test_initialize_stores_creator_address() {
     let (env, client, creator, token, _admin) = setup();
     let deadline = env.ledger().timestamp() + 3600;
     let other_creator = Address::generate(&env);
-    
+
     client.initialize(
         &creator,
         &other_creator,
@@ -1855,7 +1850,7 @@ fn test_validate_init_params_valid() {
     let env = Env::default();
     let creator = Address::generate(&env);
     let token = Address::generate(&env);
-    
+
     let params = default_init_params(&env, &creator, &token);
     let result = validate_init_params(&env, &params);
     assert!(result.is_ok());
@@ -1867,7 +1862,7 @@ fn test_validate_init_params_invalid_goal() {
     let env = Env::default();
     let creator = Address::generate(&env);
     let token = Address::generate(&env);
-    
+
     let mut params = default_init_params(&env, &creator, &token);
     params.goal = 0;
     let result = validate_init_params(&env, &params);
@@ -1986,7 +1981,7 @@ fn test_initialize_then_contribute() {
     let contributor = Address::generate(&env);
     let token_admin_client = token::StellarAssetClient::new(&env, &token);
     token_admin_client.mint(&contributor, &5_000);
-    
+
     client.contribute(&contributor, &5_000);
     assert_eq!(client.total_raised(), 5_000);
     assert_eq!(client.contributors().len(), 1);
@@ -2002,15 +1997,15 @@ fn test_initialize_then_withdraw() {
     let contributor = Address::generate(&env);
     let token_admin_client = token::StellarAssetClient::new(&env, &token);
     token_admin_client.mint(&contributor, &1_000_000);
-    
+
     client.contribute(&contributor, &1_000_000);
-    
+
     // Fast forward past deadline
     env.ledger().set_timestamp(deadline + 1);
-    
+
     // Finalize first
     client.finalize();
-    
+
     // Now withdraw should work
     client.withdraw();
 }
@@ -2022,12 +2017,12 @@ fn test_initialize_with_all_optional_params() {
     let deadline = env.ledger().timestamp() + 3600;
     let platform = Address::generate(&env);
     let desc = String::from_str(&env, "Stretch goal for extra features");
-    
+
     let config = PlatformConfig {
         address: platform.clone(),
         fee_bps: 250, // 2.5%
     };
-    
+
     client.initialize(
         &creator,
         &creator,
@@ -2045,7 +2040,7 @@ fn test_initialize_with_all_optional_params() {
     assert_eq!(client.goal(), 1_000_000);
     assert_eq!(client.bonus_goal(), Some(2_000_000));
     assert_eq!(client.bonus_goal_description(), Some(desc));
-    
+
     // Verify contribution still works
     let contributor = Address::generate(&env);
     let token_admin_client = token::StellarAssetClient::new(&env, &token);
@@ -2060,15 +2055,15 @@ fn test_execute_initialize_stores_fields_directly() {
     let env = make_env();
     let contract_id = env.register(CrowdfundContract, ());
     let client = CrowdfundContractClient::new(&env, &contract_id);
-    
+
     let creator = Address::generate(&env);
     let token_admin = Address::generate(&env);
     let token_id = env.register_stellar_asset_contract_v2(token_admin.clone());
     let token = token_id.address();
-    
+
     let token_admin_client = token::StellarAssetClient::new(&env, &token);
     token_admin_client.mint(&creator, &10_000_000);
-    
+
     let params = InitParams {
         admin: creator.clone(),
         creator: creator.clone(),
@@ -2080,10 +2075,10 @@ fn test_execute_initialize_stores_fields_directly() {
         bonus_goal: Some(10_000_000),
         bonus_goal_description: None,
     };
-    
+
     let result = execute_initialize(&env, params);
     assert!(result.is_ok());
-    
+
     assert_eq!(client.goal(), 5_000_000);
     assert_eq!(client.deadline(), env.ledger().timestamp() + 7200);
     assert_eq!(client.min_contribution(), 500);
@@ -2096,15 +2091,15 @@ fn test_execute_initialize_fails_if_already_initialized() {
     let env = make_env();
     let contract_id = env.register(CrowdfundContract, ());
     let client = CrowdfundContractClient::new(&env, &contract_id);
-    
+
     let creator = Address::generate(&env);
     let token_admin = Address::generate(&env);
     let token_id = env.register_stellar_asset_contract_v2(token_admin.clone());
     let token = token_id.address();
-    
+
     let token_admin_client = token::StellarAssetClient::new(&env, &token);
     token_admin_client.mint(&creator, &10_000_000);
-    
+
     // First initialization
     let params1 = InitParams {
         admin: creator.clone(),
@@ -2119,7 +2114,7 @@ fn test_execute_initialize_fails_if_already_initialized() {
     };
     let result1 = execute_initialize(&env, params1);
     assert!(result1.is_ok());
-    
+
     // Second initialization should fail
     let params2 = InitParams {
         admin: creator.clone(),
@@ -2141,7 +2136,7 @@ fn test_execute_initialize_fails_if_already_initialized() {
 fn test_initialize_bonus_goal_reached_flag_starts_false() {
     let (env, client, creator, token, _admin) = setup();
     let deadline = env.ledger().timestamp() + 3600;
-    
+
     client.initialize(
         &creator,
         &creator,
@@ -3035,6 +3030,6 @@ fn test_initialize_failed_platform_fee_leaves_contract_uninitialised() {
         &None,
         &None,
     );
-    
+
     assert!(!client.bonus_goal_reached());
 }
