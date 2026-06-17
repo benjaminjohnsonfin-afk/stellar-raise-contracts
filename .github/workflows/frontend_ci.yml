@@ -51,8 +51,8 @@ jobs:
       - name: Run Vitest tests
         run: pnpm --filter @stellar-raise/frontend test
 
-      - name: ESLint (all workspaces)
-        run: pnpm lint
+      - name: ESLint (frontend)
+        run: pnpm --filter @stellar-raise/frontend lint
 
       - name: Prettier format check
         run: pnpm format:check
